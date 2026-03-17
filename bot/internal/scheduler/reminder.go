@@ -6,7 +6,6 @@ import (
 	"time"
 
 	tgbot "github.com/go-telegram/bot"
-	"github.com/go-telegram/bot/models"
 
 	"traningBot/bot/internal/bot/keyboard"
 	"traningBot/bot/internal/storage/postgres"
@@ -44,19 +43,14 @@ func RunReminderLoop(ctx context.Context, store *postgres.Store, b *tgbot.Bot) {
 					}
 				}
 
-				text := "⏰ *Напоминание!*\n" + r.Message
+				text := "⏰ Напоминание!\n" + r.Message
 				params := &tgbot.SendMessageParams{
 					ChatID:    tgID,
 					Text:      text,
-					ParseMode: models.ParseModeMarkdown,
 				}
 
-				// If recurring -> show buttons (spam mechanic). If one-off -> no buttons.
-				if r.IsRecurring {
-					params.ReplyMarkup = keyboard.ReminderInlineKeyboard(r.ID)
-				} else {
-					params.ReplyMarkup = keyboard.MainMenuKeyboard()
-				}
+				// Spam-until-confirmed: always show inline buttons.
+				params.ReplyMarkup = keyboard.ReminderInlineKeyboard(r.ID)
 
 				_, err = b.SendMessage(ctx, params)
 				if err != nil {
@@ -64,9 +58,6 @@ func RunReminderLoop(ctx context.Context, store *postgres.Store, b *tgbot.Bot) {
 				}
 
 				_ = store.TouchReminderSent(ctx, r.ID, now)
-				if !r.IsRecurring {
-					_ = store.DeactivateReminder(ctx, r.ID)
-				}
 			}
 		}
 	}

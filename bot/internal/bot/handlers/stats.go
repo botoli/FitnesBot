@@ -37,13 +37,13 @@ func Stats(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *mode
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 				ChatID:      chatID,
 				Text:        "Пока нет отчетов. Нажми “✅ Я позанималась” после тренировки.",
-				ReplyMarkup: keyboard.MainMenuKeyboard(),
+				ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
 			})
 			return
 		}
 
 		var sb strings.Builder
-		sb.WriteString("📊 **Последние отчеты:**\n\n")
+		sb.WriteString("📊 Последние отчеты:\n\n")
 		for i, r := range reports {
 			sb.WriteString(strconv.Itoa(i + 1))
 			sb.WriteString(") ")
@@ -56,8 +56,7 @@ func Stats(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *mode
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
 			Text:        sb.String(),
-			ParseMode:   models.ParseModeMarkdown,
-			ReplyMarkup: keyboard.MainMenuKeyboard(),
+			ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
 		})
 	}
 }

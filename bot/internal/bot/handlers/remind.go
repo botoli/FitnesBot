@@ -34,9 +34,8 @@ func Remind(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *mod
 		app.State.Set(tgID, state.Pending{Kind: state.PendingRemind})
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
-			Text:        "Напиши дату, время и текст напоминания.\nПример: `20.03.2026 19:00 Купить протеин`",
-			ParseMode:   models.ParseModeMarkdown,
-			ReplyMarkup: keyboard.MainMenuKeyboard(),
+			Text:        "Напиши дату, время и текст напоминания.\nПример: 20.03.2026 19:00 Купить протеин",
+			ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
 		})
 	}
 }
@@ -74,7 +73,7 @@ func HandleReminderCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 				ChatID:      chatID,
 				Text:        "Хорошо, напомню чуть позже. Жду отчета!",
-				ReplyMarkup: keyboard.MainMenuKeyboard(),
+				ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
 			})
 			return
 		}
@@ -105,7 +104,7 @@ func HandleReminderCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 				ChatID:      chatID,
 				Text:        "Отлично! Сколько сегодня сделала? Напиши текстом.",
-				ReplyMarkup: keyboard.MainMenuKeyboard(),
+				ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
 			})
 			return
 		}
@@ -137,9 +136,8 @@ func HandlePendingRemindInput(app *botapp.App) func(ctx context.Context, b *tgbo
 		if err != nil {
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 				ChatID:      chatID,
-				Text:        "Не распознала. Формат: `DD.MM.YYYY HH:MM текст`",
-				ParseMode:   models.ParseModeMarkdown,
-				ReplyMarkup: keyboard.MainMenuKeyboard(),
+				Text:        "Не распознала. Формат: DD.MM.YYYY HH:MM текст",
+				ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
 			})
 			return
 		}
@@ -160,7 +158,7 @@ func HandlePendingRemindInput(app *botapp.App) func(ctx context.Context, b *tgbo
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
 			Text:        "Ок, напомню в указанное время.",
-			ReplyMarkup: keyboard.MainMenuKeyboard(),
+			ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
 		})
 	}
 }

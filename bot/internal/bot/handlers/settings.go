@@ -36,14 +36,13 @@ func Settings(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *m
 		app.State.Set(tgID, state.Pending{Kind: state.PendingSettings})
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID: chatID,
-			Text: "**Настройки напоминаний:**\n" +
+			Text: "Настройки напоминаний:\n" +
 				"🔔 Частота: каждые " + strconv.Itoa(st.ReminderIntervalMinutes) + " минут\n" +
 				"🕒 Тихие часы: " + shortTime(st.QuietStart) + " - " + shortTime(st.QuietEnd) + "\n\n" +
 				"Чтобы поменять:\n" +
-				"- `freq 10`\n" +
-				"- `quiet 23:00 08:00`",
-			ParseMode:   models.ParseModeMarkdown,
-			ReplyMarkup: keyboard.MainMenuKeyboard(),
+				"- freq 10\n" +
+				"- quiet 23:00 08:00",
+			ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
 		})
 	}
 }
@@ -76,7 +75,7 @@ func HandlePendingSettings(app *botapp.App) func(ctx context.Context, b *tgbot.B
 		switch parts[0] {
 		case "freq":
 			if len(parts) != 2 {
-				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Формат: `freq 10`", ParseMode: models.ParseModeMarkdown})
+				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Формат: freq 10"})
 				return
 			}
 			mins, err := strconv.Atoi(parts[1])
@@ -90,12 +89,12 @@ func HandlePendingSettings(app *botapp.App) func(ctx context.Context, b *tgbot.B
 				return
 			}
 			app.State.Clear(tgID)
-			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Частота обновлена.", ReplyMarkup: keyboard.MainMenuKeyboard()})
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Частота обновлена.", ReplyMarkup: keyboard.MainMenuInlineKeyboard()})
 			return
 
 		case "quiet":
 			if len(parts) != 3 {
-				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Формат: `quiet 23:00 08:00`", ParseMode: models.ParseModeMarkdown})
+				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Формат: quiet 23:00 08:00"})
 				return
 			}
 			_, err = app.Store.UpdateQuietHours(ctx, u.ID, parts[1], parts[2])
@@ -104,10 +103,10 @@ func HandlePendingSettings(app *botapp.App) func(ctx context.Context, b *tgbot.B
 				return
 			}
 			app.State.Clear(tgID)
-			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Тихие часы обновлены.", ReplyMarkup: keyboard.MainMenuKeyboard()})
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Тихие часы обновлены.", ReplyMarkup: keyboard.MainMenuInlineKeyboard()})
 			return
 		default:
-			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Команда не распознана. Примеры: `freq 10`, `quiet 23:00 08:00`", ParseMode: models.ParseModeMarkdown})
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Команда не распознана. Примеры: freq 10, quiet 23:00 08:00"})
 		}
 	}
 }

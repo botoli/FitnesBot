@@ -36,7 +36,7 @@ func Plan(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *tgmod
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 				ChatID:      update.Message.Chat.ID,
 				Text:        "Не смогла прочитать план из базы.",
-				ReplyMarkup: keyboard.MainMenuKeyboard(),
+				ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
 			})
 			return
 		}
@@ -47,10 +47,10 @@ func Plan(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *tgmod
 		}
 
 		var sb strings.Builder
-		sb.WriteString("*Твой план на неделю:*\n")
+	sb.WriteString("Твой план на неделю:\n")
 		byDay := map[int]string{}
 		for _, p := range plans {
-			byDay[p.DayOfWeek] = fmt.Sprintf("**%s:** %s\n%s", weekdayRu(p.DayOfWeek), p.Title, p.Details)
+		byDay[p.DayOfWeek] = fmt.Sprintf("%s: %s\n%s", weekdayRu(p.DayOfWeek), p.Title, p.Details)
 		}
 		for d := 1; d <= 7; d++ {
 			if v, ok := byDay[d]; ok {
@@ -61,15 +61,14 @@ func Plan(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *tgmod
 
 		today := dayOfWeekISO(time.Now())
 		if v, ok := byDay[today]; ok {
-			sb.WriteString("*Сегодня:*\n")
+		sb.WriteString("Сегодня:\n")
 			sb.WriteString(v)
 		}
 
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      update.Message.Chat.ID,
 			Text:        sb.String(),
-			ParseMode:   tgmodels.ParseModeMarkdown,
-			ReplyMarkup: keyboard.MainMenuKeyboard(),
+			ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
 		})
 	}
 }

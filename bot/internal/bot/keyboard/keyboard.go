@@ -2,20 +2,19 @@ package keyboard
 
 import "github.com/go-telegram/bot/models"
 
-func MainMenuKeyboard() *models.ReplyKeyboardMarkup {
-	return &models.ReplyKeyboardMarkup{
-		ResizeKeyboard: true,
-		Keyboard: [][]models.KeyboardButton{
+func MainMenuInlineKeyboard() *models.InlineKeyboardMarkup {
+	return &models.InlineKeyboardMarkup{
+		InlineKeyboard: [][]models.InlineKeyboardButton{
 			{
-				{Text: "📋 Мой план"},
-				{Text: "✅ Я позанималась"},
+				{Text: "📋 Мой план", CallbackData: "menu_plan"},
+				{Text: "✅ Я позанималась", CallbackData: "menu_done"},
 			},
 			{
-				{Text: "📊 Прогресс"},
-				{Text: "⏰ Напомнить"},
+				{Text: "📊 Прогресс", CallbackData: "menu_stats"},
+				{Text: "⏰ Напомнить", CallbackData: "menu_remind"},
 			},
 			{
-				{Text: "⚙️ Настройки"},
+				{Text: "⚙️ Настройки", CallbackData: "menu_settings"},
 			},
 		},
 	}

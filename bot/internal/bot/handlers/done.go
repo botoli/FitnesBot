@@ -31,7 +31,7 @@ func Done(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
 			Text:        "Отлично! Напиши отчет текстом (что и сколько сделала).",
-			ReplyMarkup: keyboard.MainMenuKeyboard(),
+			ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
 		})
 	}
 }
@@ -74,7 +74,7 @@ func HandlePendingDoneReport(app *botapp.App) func(ctx context.Context, b *tgbot
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
 			Text:        "Записала! Так держать.",
-			ReplyMarkup: keyboard.MainMenuKeyboard(),
+			ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
 		})
 	}
 }

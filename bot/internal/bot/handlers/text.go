@@ -48,7 +48,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 					return
 				}
 				app.State.Clear(tgID)
-				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Записала! Так держать.", ReplyMarkup: keyboard.MainMenuKeyboard()})
+				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Записала! Так держать.", ReplyMarkup: keyboard.MainMenuInlineKeyboard()})
 				return
 
 			case state.PendingRemind:
@@ -62,9 +62,8 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 				if err != nil {
 					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 						ChatID:      chatID,
-						Text:        "Не распознала. Формат: `DD.MM.YYYY HH:MM текст`",
-						ParseMode:   models.ParseModeMarkdown,
-						ReplyMarkup: keyboard.MainMenuKeyboard(),
+						Text:        "Не распознала. Формат: DD.MM.YYYY HH:MM текст",
+						ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
 					})
 					return
 				}
@@ -80,7 +79,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 					return
 				}
 				app.State.Clear(tgID)
-				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Ок, напомню в указанное время.", ReplyMarkup: keyboard.MainMenuKeyboard()})
+				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Ок, напомню в указанное время.", ReplyMarkup: keyboard.MainMenuInlineKeyboard()})
 				return
 
 			case state.PendingSettings:
@@ -109,7 +108,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 						return
 					}
 					app.State.Clear(tgID)
-					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Частота обновлена.", ReplyMarkup: keyboard.MainMenuKeyboard()})
+					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Частота обновлена.", ReplyMarkup: keyboard.MainMenuInlineKeyboard()})
 					return
 				case "quiet":
 					if len(parts) != 3 {
@@ -121,7 +120,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 						return
 					}
 					app.State.Clear(tgID)
-					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Тихие часы обновлены.", ReplyMarkup: keyboard.MainMenuKeyboard()})
+					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Тихие часы обновлены.", ReplyMarkup: keyboard.MainMenuInlineKeyboard()})
 					return
 				default:
 					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Команда не распознана. Примеры: `freq 10`, `quiet 23:00 08:00`", ParseMode: models.ParseModeMarkdown})
@@ -133,7 +132,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
 			Text:        "Я рядом. Выбирай действие кнопками внизу.",
-			ReplyMarkup: keyboard.MainMenuKeyboard(),
+			ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
 		})
 	}
 }

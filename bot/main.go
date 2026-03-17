@@ -68,12 +68,8 @@ func main() {
 	b.RegisterHandler(tgbot.HandlerTypeMessageText, "/stats", tgbot.MatchTypeExact, handlers.Stats(app))
 	b.RegisterHandler(tgbot.HandlerTypeMessageText, "/settings", tgbot.MatchTypeExact, handlers.Settings(app))
 
-	// Menu buttons (same as commands)
-	b.RegisterHandler(tgbot.HandlerTypeMessageText, "📋 Мой план", tgbot.MatchTypeExact, handlers.Plan(app))
-	b.RegisterHandler(tgbot.HandlerTypeMessageText, "✅ Я позанималась", tgbot.MatchTypeExact, handlers.Done(app))
-	b.RegisterHandler(tgbot.HandlerTypeMessageText, "📊 Прогресс", tgbot.MatchTypeExact, handlers.Stats(app))
-	b.RegisterHandler(tgbot.HandlerTypeMessageText, "⏰ Напомнить", tgbot.MatchTypeExact, handlers.Remind(app))
-	b.RegisterHandler(tgbot.HandlerTypeMessageText, "⚙️ Настройки", tgbot.MatchTypeExact, handlers.Settings(app))
+	// Inline menu callbacks
+	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "menu_", tgbot.MatchTypePrefix, handlers.MenuCallbacks(app))
 
 	// Callback buttons from reminders
 	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "snooze_", tgbot.MatchTypePrefix, handlers.HandleReminderCallbacks(app))

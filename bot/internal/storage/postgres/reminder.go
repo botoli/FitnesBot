@@ -82,13 +82,9 @@ SELECT id, user_id, remind_at, message, is_active, is_recurring, interval_minute
 FROM reminders
 WHERE is_active = TRUE
 AND (
-  (is_recurring = FALSE AND last_sent_at IS NULL AND remind_at <= $1)
+  (last_sent_at IS NULL AND remind_at <= $1)
   OR
-  (is_recurring = TRUE AND (
-     (last_sent_at IS NULL AND remind_at <= $1)
-     OR
-     (last_sent_at IS NOT NULL AND (last_sent_at + (interval_minutes || ' minutes')::interval) <= $1)
-  ))
+  (last_sent_at IS NOT NULL AND (last_sent_at + (interval_minutes || ' minutes')::interval) <= $1)
 )
 ORDER BY remind_at ASC
 LIMIT $2
