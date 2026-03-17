@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"log"
 	"os"
 	"os/signal"
@@ -19,6 +20,9 @@ import (
 	"traningBot/bot/internal/storage/postgres"
 )
 
+//go:embed migrations/*.sql
+var migrationFS embed.FS
+
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
@@ -33,6 +37,11 @@ func main() {
 
 	store := postgres.New(db)
 	if err := store.Ping(context.Background()); err != nil {
+		log.Fatal(err)
+	}
+
+	// Auto-run migrations (idempotent via IF NOT EXISTS)
+	if err := runMigrations(context.Background(), db); err != nil {
 		log.Fatal(err)
 	}
 
@@ -84,5 +93,14 @@ func main() {
 	}()
 
 	b.Start(ctx)
+}
+
+func runMigrations(ctx context.Context, db *sql.DB) error {
+	sqlBytes, err := migrationFS.ReadFile("migrations/001_init.sql")
+	if err != nil {
+		return err
+	}
+	_, err = db.ExecContext(ctx, string(sqlBytes))
+	return err
 }
 

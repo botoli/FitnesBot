@@ -1,11 +1,11 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
     tg_id BIGINT UNIQUE NOT NULL,
     username TEXT,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE user_settings (
+CREATE TABLE IF NOT EXISTS user_settings (
     user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     reminder_interval_minutes INT NOT NULL DEFAULT 10,
     quiet_start TIME NOT NULL DEFAULT '23:00',
@@ -14,7 +14,7 @@ CREATE TABLE user_settings (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE plans (
+CREATE TABLE IF NOT EXISTS plans (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     day_of_week INT NOT NULL CHECK (day_of_week >= 1 AND day_of_week <= 7), -- 1=Mon..7=Sun
@@ -23,7 +23,7 @@ CREATE TABLE plans (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE reminders (
+CREATE TABLE IF NOT EXISTS reminders (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     remind_at TIMESTAMP NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE reminders (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE reports (
+CREATE TABLE IF NOT EXISTS reports (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     reminder_id BIGINT REFERENCES reminders(id) ON DELETE SET NULL,
