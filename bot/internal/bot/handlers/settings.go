@@ -39,10 +39,59 @@ func Settings(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *m
 			Text: "Настройки напоминаний:\n" +
 				"🔔 Частота: каждые " + strconv.Itoa(st.ReminderIntervalMinutes) + " минут\n" +
 				"🕒 Тихие часы: " + shortTime(st.QuietStart) + " - " + shortTime(st.QuietEnd) + "\n\n" +
-				"Чтобы поменять:\n" +
+				"Можно нажать кнопки ниже или ввести текстом:\n" +
 				"- freq 10\n" +
 				"- quiet 23:00 08:00",
-			ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
+			ReplyMarkup: keyboard.SettingsInlineKeyboard(),
+		})
+	}
+}
+
+func SettingsCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
+	return func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
+		if update.CallbackQuery == nil {
+			return
+		}
+		_, _ = b.AnswerCallbackQuery(ctx, &tgbot.AnswerCallbackQueryParams{CallbackQueryID: update.CallbackQuery.ID})
+
+		if update.CallbackQuery.Message.Message == nil {
+			return
+		}
+		chatID := update.CallbackQuery.Message.Message.Chat.ID
+		tgID := update.CallbackQuery.From.ID
+		username := update.CallbackQuery.From.Username
+		data := update.CallbackQuery.Data
+
+		u, err := app.Store.EnsureUser(ctx, tgID, username)
+		if err != nil {
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Не получилось открыть профиль."})
+			return
+		}
+
+		switch data {
+		case "set_freq_5":
+			_, _ = app.Store.UpdateReminderInterval(ctx, u.ID, 5)
+		case "set_freq_10":
+			_, _ = app.Store.UpdateReminderInterval(ctx, u.ID, 10)
+		case "set_freq_15":
+			_, _ = app.Store.UpdateReminderInterval(ctx, u.ID, 15)
+		case "set_quiet_23_08":
+			_, _ = app.Store.UpdateQuietHours(ctx, u.ID, "23:00", "08:00")
+		default:
+			return
+		}
+
+		st, err := app.Store.GetUserSettings(ctx, u.ID)
+		if err != nil {
+			return
+		}
+
+		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
+			ChatID: chatID,
+			Text: "Настройки обновлены:\n" +
+				"🔔 Частота: каждые " + strconv.Itoa(st.ReminderIntervalMinutes) + " минут\n" +
+				"🕒 Тихие часы: " + shortTime(st.QuietStart) + " - " + shortTime(st.QuietEnd),
+			ReplyMarkup: keyboard.SettingsInlineKeyboard(),
 		})
 	}
 }
@@ -89,7 +138,7 @@ func HandlePendingSettings(app *botapp.App) func(ctx context.Context, b *tgbot.B
 				return
 			}
 			app.State.Clear(tgID)
-			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Частота обновлена.", ReplyMarkup: keyboard.MainMenuInlineKeyboard()})
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Частота обновлена.", ReplyMarkup: keyboard.SettingsInlineKeyboard()})
 			return
 
 		case "quiet":
@@ -103,7 +152,7 @@ func HandlePendingSettings(app *botapp.App) func(ctx context.Context, b *tgbot.B
 				return
 			}
 			app.State.Clear(tgID)
-			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Тихие часы обновлены.", ReplyMarkup: keyboard.MainMenuInlineKeyboard()})
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Тихие часы обновлены.", ReplyMarkup: keyboard.SettingsInlineKeyboard()})
 			return
 		default:
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Команда не распознана. Примеры: freq 10, quiet 23:00 08:00"})

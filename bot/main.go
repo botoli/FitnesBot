@@ -70,6 +70,8 @@ func main() {
 
 	// Inline menu callbacks
 	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "menu_", tgbot.MatchTypePrefix, handlers.MenuCallbacks(app))
+	// Settings callbacks
+	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "set_", tgbot.MatchTypePrefix, handlers.SettingsCallbacks(app))
 
 	// Callback buttons from reminders
 	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "snooze_", tgbot.MatchTypePrefix, handlers.HandleReminderCallbacks(app))

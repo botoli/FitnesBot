@@ -146,7 +146,7 @@ func HandlePendingRemindInput(app *botapp.App) func(ctx context.Context, b *tgbo
 			UserID:      u.ID,
 			RemindAt:    tm,
 			Message:     msg,
-			IsRecurring: false,
+			IsRecurring: true,
 			IntervalMin: st.ReminderIntervalMinutes,
 		})
 		if err != nil {

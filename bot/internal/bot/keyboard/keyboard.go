@@ -35,6 +35,24 @@ func EmptyInlineKeyboard() *models.InlineKeyboardMarkup {
 	return &models.InlineKeyboardMarkup{InlineKeyboard: [][]models.InlineKeyboardButton{}}
 }
 
+func SettingsInlineKeyboard() *models.InlineKeyboardMarkup {
+	return &models.InlineKeyboardMarkup{
+		InlineKeyboard: [][]models.InlineKeyboardButton{
+			{
+				{Text: "Частота 5м", CallbackData: "set_freq_5"},
+				{Text: "10м", CallbackData: "set_freq_10"},
+				{Text: "15м", CallbackData: "set_freq_15"},
+			},
+			{
+				{Text: "Тихие 23:00-08:00", CallbackData: "set_quiet_23_08"},
+			},
+			{
+				{Text: "⬅️ Меню", CallbackData: "menu_home"},
+			},
+		},
+	}
+}
+
 func itoa64(v int64) string {
 	// small local helper to avoid strconv import across packages; keyboard is tiny so keep it here
 	const digits = "0123456789"

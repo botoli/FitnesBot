@@ -71,7 +71,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 					UserID:      u.ID,
 					RemindAt:    tm,
 					Message:     msg,
-					IsRecurring: false,
+					IsRecurring: true,
 					IntervalMin: st.ReminderIntervalMinutes,
 				})
 				if err != nil {
