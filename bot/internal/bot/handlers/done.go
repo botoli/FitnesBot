@@ -42,9 +42,9 @@ func Done(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 		}
 
 		todayPlans := plansForToday(plans)
-		selectionText := "🏋️ Главное › Я позанималась\n\n🏋️ Что сегодня делала?\n\nВыбери тренировку из плана:"
+		selectionText := "🏋️ Главное › Я позанималась\n\n🏋️ Что сегодня делала?\n\nВыбери тренировку из плана или свою:"
 		if len(todayPlans) == 0 {
-			selectionText = "🏋️ Главное › Я позанималась\n\n🏋️ Что сегодня делала?\n\nНа сегодня плана нет, выбери «Своя тренировка ✍️»."
+			selectionText = "🏋️ Главное › Я позанималась\n\n🏋️ Что сегодня делала?\n\nНа сегодня в плане ничего нет — нажми «Своя тренировка ✍️» или добавь план в разделе «➕ Добавить тренировку»."
 		}
 		sent, err := b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
@@ -81,16 +81,47 @@ func HandleDoneFlowCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot
 		msgID := msg.ID
 		tgID := update.CallbackQuery.From.ID
 
+		if data == "doneflow_cancel" {
+			app.State.Clear(tgID)
+			cancelText := "❌ Запись отменена.\n\nКогда будешь готова — нажми «" + keyboard.BtnDone + "» под сообщением ниже."
+			if _, err := b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
+				ChatID:      chatID,
+				MessageID:   msgID,
+				Text:        cancelText,
+				ReplyMarkup: keyboard.EmptyInlineKeyboard(),
+			}); err != nil {
+				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: cancelText})
+			}
+			return
+		}
+
+		if data == "doneflow_home" {
+			app.State.Clear(tgID)
+			if _, err := b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
+				ChatID:      chatID,
+				MessageID:   msgID,
+				Text:        "🏠 Главное меню — смотри сообщения ниже.",
+				ReplyMarkup: keyboard.EmptyInlineKeyboard(),
+			}); err != nil {
+				// ignore
+			}
+			SendHomeMessages(ctx, b, chatID, "")
+			return
+		}
+
 		if data == "doneflow_custom" {
 			app.State.Set(tgID, state.Pending{Kind: state.PendingDoneReport})
+			cancelOnly := &models.InlineKeyboardMarkup{InlineKeyboard: keyboard.DoneFlowCancelRow()}
 			if _, err := b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
-				ChatID:    chatID,
-				MessageID: msgID,
-				Text:      "🏋️ Главное › Я позанималась › Своя тренировка\n\nОпиши тренировку текстом: что делала и сколько.",
+				ChatID:      chatID,
+				MessageID:   msgID,
+				Text:        "🏋️ Главное › Я позанималась › Своя тренировка\n\nОпиши тренировку текстом: что делала и сколько.",
+				ReplyMarkup: cancelOnly,
 			}); err != nil {
 				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
-					ChatID: chatID,
-					Text:   "🏋️ Главное › Я позанималась › Своя тренировка\n\nОпиши тренировку текстом: что делала и сколько.",
+					ChatID:      chatID,
+					Text:        "🏋️ Главное › Я позанималась › Своя тренировка\n\nОпиши тренировку текстом: что делала и сколько.",
+					ReplyMarkup: cancelOnly,
 				})
 			}
 			return
@@ -145,63 +176,23 @@ func HandleDoneFlowCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot
 			CurrentIndex:    0,
 			PromptMessageID: msgID,
 		}
+		exMark := doneFlowExerciseReplyMarkup()
 		if _, err := b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
-			ChatID:    chatID,
-			MessageID: msgID,
-			Text:      doneExercisePrompt(session),
+			ChatID:      chatID,
+			MessageID:   msgID,
+			Text:        doneExercisePrompt(session),
+			ReplyMarkup: exMark,
 		}); err != nil {
 			sent, sendErr := b.SendMessage(ctx, &tgbot.SendMessageParams{
-				ChatID: chatID,
-				Text:   doneExercisePrompt(session),
+				ChatID:      chatID,
+				Text:        doneExercisePrompt(session),
+				ReplyMarkup: exMark,
 			})
 			if sendErr == nil {
 				session.PromptMessageID = sent.ID
 			}
 		}
 		app.State.Set(tgID, state.Pending{Kind: state.PendingDoneFlow, DoneFlow: session})
-	}
-}
-
-func HandlePendingDoneReport(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
-	return func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
-		if update.Message == nil || update.Message.Text == "" {
-			return
-		}
-		tgID := update.Message.From.ID
-		chatID := update.Message.Chat.ID
-
-		p, ok := app.State.Get(tgID)
-		if !ok || p.Kind != state.PendingDoneReport {
-			return
-		}
-
-		u, err := app.Store.GetUserByTgID(ctx, tgID)
-		if err != nil {
-			app.State.Clear(tgID)
-			return
-		}
-
-		var reminderID *int64
-		if p.ReminderID != nil {
-			reminderID = p.ReminderID
-		}
-
-		_, err = app.Store.CreateReport(ctx, stmodels.Report{
-			UserID:     u.ID,
-			ReminderID: reminderID,
-			ReportText: update.Message.Text,
-		})
-		if err != nil {
-			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Не смогла записать отчет."})
-			return
-		}
-
-		app.State.Clear(tgID)
-		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
-			ChatID:      chatID,
-			Text:        "Записала! Так держать.",
-			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
-		})
 	}
 }
 
@@ -222,7 +213,11 @@ func HandlePendingDoneFlowInput(app *botapp.App) func(ctx context.Context, b *tg
 			return
 		}
 		if _, ok := parseFloatValue(value); !ok {
-			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Введи число, например: 15 или 1.5"})
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
+				ChatID:          chatID,
+				Text:            "Нужно число, например 15 или 1.5. Или напиши «отмена».",
+				ReplyParameters: &models.ReplyParameters{MessageID: update.Message.ID},
+			})
 			return
 		}
 
@@ -231,14 +226,17 @@ func HandlePendingDoneFlowInput(app *botapp.App) func(ctx context.Context, b *tg
 
 		if p.DoneFlow.CurrentIndex+1 < len(p.DoneFlow.Exercises) {
 			p.DoneFlow.CurrentIndex++
+			exMark := doneFlowExerciseReplyMarkup()
 			if _, err := b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
-				ChatID:    chatID,
-				MessageID: p.DoneFlow.PromptMessageID,
-				Text:      doneExercisePrompt(p.DoneFlow),
+				ChatID:      chatID,
+				MessageID:   p.DoneFlow.PromptMessageID,
+				Text:        doneExercisePrompt(p.DoneFlow),
+				ReplyMarkup: exMark,
 			}); err != nil {
 				sent, sendErr := b.SendMessage(ctx, &tgbot.SendMessageParams{
-					ChatID: chatID,
-					Text:   doneExercisePrompt(p.DoneFlow),
+					ChatID:      chatID,
+					Text:        doneExercisePrompt(p.DoneFlow),
+					ReplyMarkup: exMark,
 				})
 				if sendErr == nil {
 					p.DoneFlow.PromptMessageID = sent.ID
@@ -294,12 +292,34 @@ func plansForToday(plans []stmodels.Plan) []stmodels.Plan {
 }
 
 func donePickInlineKeyboard(plans []stmodels.Plan) *models.InlineKeyboardMarkup {
-	rows := make([][]models.InlineKeyboardButton, 0, len(plans)+1)
+	rows := make([][]models.InlineKeyboardButton, 0, len(plans)+2)
+	var cur []models.InlineKeyboardButton
 	for _, p := range plans {
-		rows = append(rows, []models.InlineKeyboardButton{{Text: p.Title, CallbackData: "doneflow_plan_" + strconv.FormatInt(p.ID, 10)}})
+		btn := models.InlineKeyboardButton{Text: trimInlineButtonTitle(p.Title), CallbackData: "doneflow_plan_" + strconv.FormatInt(p.ID, 10)}
+		if len(cur) >= 2 {
+			rows = append(rows, cur)
+			cur = nil
+		}
+		cur = append(cur, btn)
+	}
+	if len(cur) > 0 {
+		rows = append(rows, cur)
 	}
 	rows = append(rows, []models.InlineKeyboardButton{{Text: "Своя тренировка ✍️", CallbackData: "doneflow_custom"}})
+	rows = append(rows, []models.InlineKeyboardButton{{Text: "❌ Отменить", CallbackData: "doneflow_cancel"}})
 	return &models.InlineKeyboardMarkup{InlineKeyboard: rows}
+}
+
+func trimInlineButtonTitle(s string) string {
+	r := []rune(strings.TrimSpace(s))
+	if len(r) <= 28 {
+		return string(r)
+	}
+	return string(r[:27]) + "…"
+}
+
+func doneFlowExerciseReplyMarkup() *models.InlineKeyboardMarkup {
+	return &models.InlineKeyboardMarkup{InlineKeyboard: keyboard.DoneFlowCancelRow()}
 }
 
 func parsePlanExercises(details string) []state.DoneExercise {
@@ -365,23 +385,59 @@ func doneFinalSummary(flow *state.DoneFlowSession) string {
 	sb.WriteString(" упражнений\n\n")
 	sb.WriteString("📊 Твои результаты:\n")
 	for _, a := range flow.Answers {
-		sb.WriteString("• ")
-		sb.WriteString(a.Name)
-		sb.WriteString(": ")
-		sb.WriteString(a.Actual)
-		if a.Plan != "" {
-			sb.WriteString(" (план: ")
-			sb.WriteString(a.Plan)
-			sb.WriteString(")")
-		}
-		if d, ok := deltaToPlan(a.Actual, a.Plan); ok {
-			sb.WriteString(" ")
-			sb.WriteString(d)
-		}
+		sb.WriteString(formatExerciseResultLine(a))
 		sb.WriteString("\n")
 	}
 	sb.WriteString("\n💪 Ты умница! Результаты записаны в историю")
 	return sb.String()
+}
+
+func formatExerciseResultLine(a state.DoneAnswer) string {
+	unit := unitSuffixFromPlan(a.Plan)
+	actual := strings.TrimSpace(a.Actual)
+	var sb strings.Builder
+	sb.WriteString("• ")
+	sb.WriteString(a.Name)
+	sb.WriteString(": ")
+	sb.WriteString(actual)
+	if unit != "" {
+		sb.WriteString(" ")
+		sb.WriteString(unit)
+	}
+	if s := deltaHumanReadable(a.Actual, a.Plan); s != "" {
+		sb.WriteString(" ")
+		sb.WriteString(s)
+	}
+	return sb.String()
+}
+
+func unitSuffixFromPlan(plan string) string {
+	pl := strings.ToLower(plan)
+	switch {
+	case strings.Contains(pl, "мин"):
+		return "мин"
+	case strings.Contains(pl, "сек"):
+		return "сек"
+	case strings.Contains(pl, "раз"):
+		return "раз"
+	default:
+		return ""
+	}
+}
+
+func deltaHumanReadable(actual, plan string) string {
+	a, okA := parseFloatValue(actual)
+	p, okP := parseFloatValue(plan)
+	if !okA || !okP {
+		return ""
+	}
+	if math.Abs(a-p) < 0.001 {
+		return "(👍 норма)"
+	}
+	if a > p {
+		return fmt.Sprintf("(+%s к плану) 🔥", shortFloat(a-p))
+	}
+	return fmt.Sprintf("(%s до плана)", shortFloat(a-p))
 }
 
 func reportTextFromDoneFlow(flow *state.DoneFlowSession) string {
@@ -420,22 +476,6 @@ func progressBar(done int, total int) string {
 		}
 	}
 	return sb.String()
-}
-
-func deltaToPlan(actual string, plan string) (string, bool) {
-	a, okA := parseFloatValue(actual)
-	p, okP := parseFloatValue(plan)
-	if !okA || !okP {
-		return "", false
-	}
-	delta := a - p
-	if math.Abs(delta) < 0.001 {
-		return "(👍 норма)", true
-	}
-	if delta > 0 {
-		return fmt.Sprintf("(+%s к плану) 🔥", shortFloat(delta)), true
-	}
-	return fmt.Sprintf("(%s до плана)", shortFloat(delta)), true
 }
 
 func parseFloatValue(text string) (float64, bool) {

@@ -34,9 +34,46 @@ func Remind(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *mod
 		app.State.Set(tgID, state.Pending{Kind: state.PendingRemind})
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
-			Text:        "Напиши дату, время и текст напоминания.\nПример: 20.03.2026 19:00 Купить протеин",
+			Text: "⏰ Новое напоминание\n\n" +
+				"Напиши одной строкой: дату, время и текст.\n" +
+				"Пример: 20.03.2026 19:00 Купить протеин\n\n" +
+				"Или нажми «Отмена» под этим сообщением.",
 			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
 		})
+		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
+			ChatID:      chatID,
+			Text:        "👇",
+			ReplyMarkup: keyboard.RemindCancelInlineKeyboard(),
+		})
+	}
+}
+
+// HandleRemindCancel — отмена ввода напоминания (inline).
+func HandleRemindCancel(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
+	return func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
+		if update.CallbackQuery == nil || update.CallbackQuery.Message.Message == nil {
+			return
+		}
+		_, _ = b.AnswerCallbackQuery(ctx, &tgbot.AnswerCallbackQueryParams{CallbackQueryID: update.CallbackQuery.ID})
+
+		tgID := update.CallbackQuery.From.ID
+		p, ok := app.State.Get(tgID)
+		if !ok || p.Kind != state.PendingRemind {
+			return
+		}
+		app.State.Clear(tgID)
+
+		msg := update.CallbackQuery.Message.Message
+		chatID := msg.Chat.ID
+		if _, err := b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
+			ChatID:      chatID,
+			MessageID:   msg.ID,
+			Text:        "❌ Создание напоминания отменено.",
+			ReplyMarkup: keyboard.EmptyInlineKeyboard(),
+		}); err != nil {
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "❌ Создание напоминания отменено."})
+		}
+		SendHomeMessages(ctx, b, chatID, "")
 	}
 }
 

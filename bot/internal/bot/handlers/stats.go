@@ -42,7 +42,7 @@ func Stats(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *mode
 		if len(reports) == 0 {
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 				ChatID:      chatID,
-				Text:        "Пока нет отчетов. Нажми “✅ Я позанималась” после тренировки.",
+				Text:        "Пока нет отчётов. После тренировки нажми «✅ Я позанималась» под быстрыми кнопками.",
 				ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
 			})
 			return

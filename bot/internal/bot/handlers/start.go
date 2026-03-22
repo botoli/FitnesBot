@@ -20,15 +20,8 @@ func Start(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *mode
 		username := update.Message.From.Username
 
 		_, _ = app.Store.EnsureUser(ctx, tgID, username)
-		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
-			ChatID:      chatID,
-			Text:        "Привет! Я твой тренировочный бот.\nОсновные действия внизу на обычной клавиатуре.",
-			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
-		})
-		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
-			ChatID:      chatID,
-			Text:        "Быстрые кнопки:",
-			ReplyMarkup: keyboard.QuickActionsInlineKeyboard(),
-		})
+		SendHomeMessages(ctx, b, chatID,
+			"Привет! Я помогу вести план, записывать тренировки и напоминания.\n\n"+
+				"Снизу — разделы. Ниже вторым сообщением — быстрые кнопки «"+keyboard.BtnDone+"» и «"+keyboard.BtnRemind+"».")
 	}
 }

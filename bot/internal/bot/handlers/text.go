@@ -16,6 +16,16 @@ import (
 	"traningBot/bot/internal/utils"
 )
 
+func isCancelIntent(s string) bool {
+	t := strings.ToLower(strings.TrimSpace(s))
+	switch t {
+	case "отмена", "отменить", "назад", "cancel", "меню", "главное", "стоп", "хватит", "выход":
+		return true
+	default:
+		return false
+	}
+}
+
 func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
 	return func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
 		if update.Message == nil || update.Message.Text == "" {
@@ -24,6 +34,12 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 		tgID := update.Message.From.ID
 		chatID := update.Message.Chat.ID
 		text := strings.TrimSpace(update.Message.Text)
+
+		if isCancelIntent(text) {
+			app.State.Clear(tgID)
+			SendHomeMessages(ctx, b, chatID, "Окей, отменила.\n\n")
+			return
+		}
 
 		switch text {
 		case keyboard.BtnPlan, "/plan":
@@ -49,6 +65,9 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 		case keyboard.BtnSettings, "/settings":
 			app.State.Clear(tgID)
 			Settings(app)(ctx, b, update)
+			return
+		case "/cancel":
+			Cancel(app)(ctx, b, update)
 			return
 		}
 
@@ -84,6 +103,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 				}
 				app.State.Clear(tgID)
 				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Записала! Так держать.", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
+				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "⚡ Быстрые действия:", ReplyMarkup: keyboard.QuickActionsInlineKeyboard()})
 				return
 
 			case state.PendingRemind:
@@ -164,15 +184,6 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 			}
 		}
 
-		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
-			ChatID:      chatID,
-			Text:        "Я рядом. Выбирай действие кнопками внизу.",
-			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
-		})
-		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
-			ChatID:      chatID,
-			Text:        "Быстрые действия:",
-			ReplyMarkup: keyboard.QuickActionsInlineKeyboard(),
-		})
+		SendHomeMessages(ctx, b, chatID, "Не поняла, что сделать.\n\n")
 	}
 }

@@ -127,6 +127,16 @@ func HandlePlanAddCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot.
 		}
 
 		switch data {
+		case "planadd_cancel":
+			app.State.Clear(tgID)
+			targetMsg := draft.PromptMsg
+			if targetMsg == 0 {
+				targetMsg = msgID
+			}
+			_ = editPlanDraftMessage(ctx, b, chatID, targetMsg, "❌ Добавление тренировки отменено.", keyboard.EmptyInlineKeyboard())
+			SendHomeMessages(ctx, b, chatID, "")
+			return
+
 		case "planadd_done_days":
 			if draft.Step != state.PlanDraftSelectDays {
 				return
@@ -241,6 +251,7 @@ func planAddDaysInlineKeyboard(selected []int) *models.InlineKeyboardMarkup {
 		InlineKeyboard: [][]models.InlineKeyboardButton{
 			row,
 			{{Text: "✅ Готово", CallbackData: "planadd_done_days"}},
+			{{Text: "❌ Отмена", CallbackData: "planadd_cancel"}},
 		},
 	}
 }
@@ -249,6 +260,7 @@ func planAddExerciseActionsKeyboard() *models.InlineKeyboardMarkup {
 	return &models.InlineKeyboardMarkup{
 		InlineKeyboard: [][]models.InlineKeyboardButton{
 			{{Text: "➕ Добавить еще", CallbackData: "planadd_add_more"}, {Text: "✅ Сохранить тренировку", CallbackData: "planadd_save"}},
+			{{Text: "❌ Отмена", CallbackData: "planadd_cancel"}},
 		},
 	}
 }

@@ -69,6 +69,7 @@ func main() {
 	b.RegisterHandler(tgbot.HandlerTypeMessageText, "/remind", tgbot.MatchTypeExact, handlers.Remind(app))
 	b.RegisterHandler(tgbot.HandlerTypeMessageText, "/stats", tgbot.MatchTypeExact, handlers.Stats(app))
 	b.RegisterHandler(tgbot.HandlerTypeMessageText, "/settings", tgbot.MatchTypeExact, handlers.Settings(app))
+	b.RegisterHandler(tgbot.HandlerTypeMessageText, "/cancel", tgbot.MatchTypeExact, handlers.Cancel(app))
 
 	// Inline menu callbacks
 	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "menu_", tgbot.MatchTypePrefix, handlers.MenuCallbacks(app))
@@ -81,6 +82,7 @@ func main() {
 	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "snooze_", tgbot.MatchTypePrefix, handlers.HandleReminderCallbacks(app))
 	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "done_remind_", tgbot.MatchTypePrefix, handlers.HandleReminderCallbacks(app))
 	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "doneflow_", tgbot.MatchTypePrefix, handlers.HandleDoneFlowCallbacks(app))
+	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "remind_cancel", tgbot.MatchTypeExact, handlers.HandleRemindCancel(app))
 
 	// Default text handler (pending flows + unknown text)
 	b.RegisterHandler(tgbot.HandlerTypeMessageText, "", tgbot.MatchTypePrefix, handlers.Text(app))

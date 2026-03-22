@@ -7,7 +7,6 @@ import (
 	"github.com/go-telegram/bot/models"
 
 	botapp "traningBot/bot/internal/bot"
-	"traningBot/bot/internal/bot/keyboard"
 )
 
 func MenuCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
@@ -29,16 +28,7 @@ func MenuCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, upda
 
 		switch update.CallbackQuery.Data {
 		case "menu_home":
-			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
-				ChatID:      msg.Chat.ID,
-				Text:        "Выбирай действие:",
-				ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
-			})
-			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
-				ChatID:      msg.Chat.ID,
-				Text:        "Быстрые действия:",
-				ReplyMarkup: keyboard.QuickActionsInlineKeyboard(),
-			})
+			SendHomeMessages(ctx, b, msg.Chat.ID, "")
 		case "menu_plan":
 			Plan(app)(ctx, b, &models.Update{Message: &msg})
 		case "menu_done":

@@ -13,7 +13,9 @@ const (
 
 func MainMenuReplyKeyboard() *models.ReplyKeyboardMarkup {
 	return &models.ReplyKeyboardMarkup{
-		ResizeKeyboard: true,
+		ResizeKeyboard:        true,
+		IsPersistent:          true,
+		InputFieldPlaceholder: "Число, дата или выбери кнопку ↓",
 		Keyboard: [][]models.KeyboardButton{
 			{{Text: BtnPlan}, {Text: BtnStats}},
 			{{Text: BtnAddPlan}},
@@ -45,6 +47,22 @@ func DoneFinalInlineKeyboard() *models.InlineKeyboardMarkup {
 	return &models.InlineKeyboardMarkup{
 		InlineKeyboard: [][]models.InlineKeyboardButton{
 			{{Text: "Посмотреть статистику 📈", CallbackData: "doneflow_stats"}},
+			{{Text: "🏠 В меню", CallbackData: "doneflow_home"}},
+		},
+	}
+}
+
+// DoneFlowCancelRow — отмена записи тренировки (одна строка).
+func DoneFlowCancelRow() [][]models.InlineKeyboardButton {
+	return [][]models.InlineKeyboardButton{
+		{{Text: "❌ Отменить запись", CallbackData: "doneflow_cancel"}},
+	}
+}
+
+func RemindCancelInlineKeyboard() *models.InlineKeyboardMarkup {
+	return &models.InlineKeyboardMarkup{
+		InlineKeyboard: [][]models.InlineKeyboardButton{
+			{{Text: "❌ Отмена", CallbackData: "remind_cancel"}},
 		},
 	}
 }
