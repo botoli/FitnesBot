@@ -2,20 +2,30 @@ package keyboard
 
 import "github.com/go-telegram/bot/models"
 
-func MainMenuInlineKeyboard() *models.InlineKeyboardMarkup {
+const (
+	BtnPlan     = "📋 Мой план"
+	BtnDone     = "✅ Я позанималась"
+	BtnStats    = "📊 Прогресс"
+	BtnRemind   = "⏰ Напомнить"
+	BtnAddPlan  = "➕ Добавить тренировку"
+	BtnSettings = "⚙️ Настройки"
+)
+
+func MainMenuReplyKeyboard() *models.ReplyKeyboardMarkup {
+	return &models.ReplyKeyboardMarkup{
+		ResizeKeyboard: true,
+		Keyboard: [][]models.KeyboardButton{
+			{{Text: BtnPlan}, {Text: BtnStats}},
+			{{Text: BtnAddPlan}},
+			{{Text: BtnSettings}},
+		},
+	}
+}
+
+func QuickActionsInlineKeyboard() *models.InlineKeyboardMarkup {
 	return &models.InlineKeyboardMarkup{
 		InlineKeyboard: [][]models.InlineKeyboardButton{
-			{
-				{Text: "📋 Мой план", CallbackData: "menu_plan"},
-				{Text: "✅ Я позанималась", CallbackData: "menu_done"},
-			},
-			{
-				{Text: "📊 Прогресс", CallbackData: "menu_stats"},
-				{Text: "⏰ Напомнить", CallbackData: "menu_remind"},
-			},
-			{
-				{Text: "⚙️ Настройки", CallbackData: "menu_settings"},
-			},
+			{{Text: BtnDone, CallbackData: "menu_done"}, {Text: BtnRemind, CallbackData: "menu_remind"}},
 		},
 	}
 }
@@ -27,6 +37,30 @@ func ReminderInlineKeyboard(reminderID int64) *models.InlineKeyboardMarkup {
 				{Text: "✅ Сделала!", CallbackData: "done_remind_" + itoa64(reminderID)},
 				{Text: "⏳ Еще нет", CallbackData: "snooze_" + itoa64(reminderID)},
 			},
+		},
+	}
+}
+
+func DoneFinalInlineKeyboard() *models.InlineKeyboardMarkup {
+	return &models.InlineKeyboardMarkup{
+		InlineKeyboard: [][]models.InlineKeyboardButton{
+			{{Text: "Посмотреть статистику 📈", CallbackData: "doneflow_stats"}},
+		},
+	}
+}
+
+func PlanSavedInlineKeyboard() *models.InlineKeyboardMarkup {
+	return &models.InlineKeyboardMarkup{
+		InlineKeyboard: [][]models.InlineKeyboardButton{
+			{{Text: "📋 Мой план", CallbackData: "menu_plan"}, {Text: "🏋️ Начать тренировку сейчас", CallbackData: "menu_done"}},
+		},
+	}
+}
+
+func PlanViewInlineKeyboard() *models.InlineKeyboardMarkup {
+	return &models.InlineKeyboardMarkup{
+		InlineKeyboard: [][]models.InlineKeyboardButton{
+			{{Text: "✅ Начать сегодняшнюю", CallbackData: "menu_done"}, {Text: "✏️ Редактировать план", CallbackData: "menu_addplan"}},
 		},
 	}
 }
@@ -68,5 +102,3 @@ func itoa64(v int64) string {
 	}
 	return string(buf[i:])
 }
-
-

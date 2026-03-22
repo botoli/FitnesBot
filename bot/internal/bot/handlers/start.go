@@ -22,9 +22,13 @@ func Start(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *mode
 		_, _ = app.Store.EnsureUser(ctx, tgID, username)
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
-			Text:        "Привет! Я твой тренировочный бот.\nВыбирай действие кнопками внизу или командами /plan /done /remind /stats /settings.",
-			ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
+			Text:        "Привет! Я твой тренировочный бот.\nОсновные действия внизу на обычной клавиатуре.",
+			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
+		})
+		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
+			ChatID:      chatID,
+			Text:        "Быстрые кнопки:",
+			ReplyMarkup: keyboard.QuickActionsInlineKeyboard(),
 		})
 	}
 }
-

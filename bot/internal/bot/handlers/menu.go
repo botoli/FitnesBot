@@ -32,12 +32,19 @@ func MenuCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, upda
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 				ChatID:      msg.Chat.ID,
 				Text:        "Выбирай действие:",
-				ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
+				ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
+			})
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
+				ChatID:      msg.Chat.ID,
+				Text:        "Быстрые действия:",
+				ReplyMarkup: keyboard.QuickActionsInlineKeyboard(),
 			})
 		case "menu_plan":
 			Plan(app)(ctx, b, &models.Update{Message: &msg})
 		case "menu_done":
 			Done(app)(ctx, b, &models.Update{Message: &msg})
+		case "menu_addplan":
+			AddPlan(app)(ctx, b, &models.Update{Message: &msg})
 		case "menu_stats":
 			Stats(app)(ctx, b, &models.Update{Message: &msg})
 		case "menu_remind":
@@ -47,4 +54,3 @@ func MenuCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, upda
 		}
 	}
 }
-

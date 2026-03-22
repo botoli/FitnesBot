@@ -25,9 +25,44 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 		chatID := update.Message.Chat.ID
 		text := strings.TrimSpace(update.Message.Text)
 
+		switch text {
+		case keyboard.BtnPlan, "/plan":
+			app.State.Clear(tgID)
+			Plan(app)(ctx, b, update)
+			return
+		case keyboard.BtnAddPlan, "/addplan":
+			app.State.Clear(tgID)
+			AddPlan(app)(ctx, b, update)
+			return
+		case keyboard.BtnDone, "/done":
+			app.State.Clear(tgID)
+			Done(app)(ctx, b, update)
+			return
+		case keyboard.BtnStats, "/stats":
+			app.State.Clear(tgID)
+			Stats(app)(ctx, b, update)
+			return
+		case keyboard.BtnRemind, "/remind":
+			app.State.Clear(tgID)
+			Remind(app)(ctx, b, update)
+			return
+		case keyboard.BtnSettings, "/settings":
+			app.State.Clear(tgID)
+			Settings(app)(ctx, b, update)
+			return
+		}
+
 		p, ok := app.State.Get(tgID)
 		if ok {
 			switch p.Kind {
+			case state.PendingDoneFlow:
+				HandlePendingDoneFlowInput(app)(ctx, b, update)
+				return
+
+			case state.PendingPlanAdd:
+				HandlePendingPlanAdd(app)(ctx, b, update)
+				return
+
 			case state.PendingDoneReport:
 				u, err := app.Store.GetUserByTgID(ctx, tgID)
 				if err != nil {
@@ -48,7 +83,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 					return
 				}
 				app.State.Clear(tgID)
-				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Записала! Так держать.", ReplyMarkup: keyboard.MainMenuInlineKeyboard()})
+				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Записала! Так держать.", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
 				return
 
 			case state.PendingRemind:
@@ -63,7 +98,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 						ChatID:      chatID,
 						Text:        "Не распознала. Формат: DD.MM.YYYY HH:MM текст",
-						ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
+						ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
 					})
 					return
 				}
@@ -79,7 +114,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 					return
 				}
 				app.State.Clear(tgID)
-				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Ок, напомню в указанное время.", ReplyMarkup: keyboard.MainMenuInlineKeyboard()})
+				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Ок, напомню в указанное время.", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
 				return
 
 			case state.PendingSettings:
@@ -108,7 +143,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 						return
 					}
 					app.State.Clear(tgID)
-					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Частота обновлена.", ReplyMarkup: keyboard.MainMenuInlineKeyboard()})
+					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Частота обновлена.", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
 					return
 				case "quiet":
 					if len(parts) != 3 {
@@ -120,7 +155,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 						return
 					}
 					app.State.Clear(tgID)
-					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Тихие часы обновлены.", ReplyMarkup: keyboard.MainMenuInlineKeyboard()})
+					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Тихие часы обновлены.", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
 					return
 				default:
 					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Команда не распознана. Примеры: `freq 10`, `quiet 23:00 08:00`", ParseMode: models.ParseModeMarkdown})
@@ -132,8 +167,12 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
 			Text:        "Я рядом. Выбирай действие кнопками внизу.",
-			ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
+			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
+		})
+		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
+			ChatID:      chatID,
+			Text:        "Быстрые действия:",
+			ReplyMarkup: keyboard.QuickActionsInlineKeyboard(),
 		})
 	}
 }
-

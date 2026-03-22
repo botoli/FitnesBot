@@ -39,10 +39,10 @@ func Settings(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *m
 			Text: "Настройки напоминаний:\n" +
 				"🔔 Частота: каждые " + strconv.Itoa(st.ReminderIntervalMinutes) + " минут\n" +
 				"🕒 Тихие часы: " + shortTime(st.QuietStart) + " - " + shortTime(st.QuietEnd) + "\n\n" +
-				"Можно нажать кнопки ниже или ввести текстом:\n" +
+				"Введи команду текстом:\n" +
 				"- freq 10\n" +
 				"- quiet 23:00 08:00",
-			ReplyMarkup: keyboard.SettingsInlineKeyboard(),
+			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
 		})
 	}
 }
@@ -91,7 +91,7 @@ func SettingsCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, 
 			Text: "Настройки обновлены:\n" +
 				"🔔 Частота: каждые " + strconv.Itoa(st.ReminderIntervalMinutes) + " минут\n" +
 				"🕒 Тихие часы: " + shortTime(st.QuietStart) + " - " + shortTime(st.QuietEnd),
-			ReplyMarkup: keyboard.SettingsInlineKeyboard(),
+			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
 		})
 	}
 }
@@ -138,7 +138,7 @@ func HandlePendingSettings(app *botapp.App) func(ctx context.Context, b *tgbot.B
 				return
 			}
 			app.State.Clear(tgID)
-			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Частота обновлена.", ReplyMarkup: keyboard.SettingsInlineKeyboard()})
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Частота обновлена.", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
 			return
 
 		case "quiet":
@@ -152,7 +152,7 @@ func HandlePendingSettings(app *botapp.App) func(ctx context.Context, b *tgbot.B
 				return
 			}
 			app.State.Clear(tgID)
-			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Тихие часы обновлены.", ReplyMarkup: keyboard.SettingsInlineKeyboard()})
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Тихие часы обновлены.", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
 			return
 		default:
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Команда не распознана. Примеры: freq 10, quiet 23:00 08:00"})
@@ -167,4 +167,3 @@ func shortTime(dbTime string) string {
 	}
 	return dbTime
 }
-

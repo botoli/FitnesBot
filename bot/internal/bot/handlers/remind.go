@@ -35,7 +35,7 @@ func Remind(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *mod
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
 			Text:        "Напиши дату, время и текст напоминания.\nПример: 20.03.2026 19:00 Купить протеин",
-			ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
+			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
 		})
 	}
 }
@@ -73,7 +73,7 @@ func HandleReminderCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 				ChatID:      chatID,
 				Text:        "Хорошо, напомню чуть позже. Жду отчета!",
-				ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
+				ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
 			})
 			return
 		}
@@ -104,7 +104,7 @@ func HandleReminderCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 				ChatID:      chatID,
 				Text:        "Отлично! Сколько сегодня сделала? Напиши текстом.",
-				ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
+				ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
 			})
 			return
 		}
@@ -137,7 +137,7 @@ func HandlePendingRemindInput(app *botapp.App) func(ctx context.Context, b *tgbo
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 				ChatID:      chatID,
 				Text:        "Не распознала. Формат: DD.MM.YYYY HH:MM текст",
-				ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
+				ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
 			})
 			return
 		}
@@ -158,7 +158,7 @@ func HandlePendingRemindInput(app *botapp.App) func(ctx context.Context, b *tgbo
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
 			Text:        "Ок, напомню в указанное время.",
-			ReplyMarkup: keyboard.MainMenuInlineKeyboard(),
+			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
 		})
 	}
 }
@@ -174,4 +174,3 @@ func mustUserID(ctx context.Context, app *botapp.App, tgID int64) int64 {
 	}
 	return u.ID
 }
-
