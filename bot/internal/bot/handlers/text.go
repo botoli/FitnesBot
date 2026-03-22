@@ -9,6 +9,7 @@ import (
 	"github.com/go-telegram/bot/models"
 
 	botapp "traningBot/bot/internal/bot"
+	"traningBot/bot/internal/bot/copy"
 	"traningBot/bot/internal/bot/keyboard"
 	"traningBot/bot/internal/bot/state"
 	stmodels "traningBot/bot/internal/storage/models"
@@ -36,7 +37,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 
 		if isCancelIntent(text) {
 			app.State.Clear(tgID)
-			SendHomeMessages(ctx, b, chatID, "Окей, отменила.\n\n")
+			SendHomeMessages(ctx, b, chatID, copy.MsgCancelAck)
 			return
 		}
 
@@ -67,6 +68,10 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 			return
 		case "/cancel":
 			Cancel(app)(ctx, b, update)
+			return
+		case "/help":
+			app.State.Clear(tgID)
+			Help(app)(ctx, b, update)
 			return
 		}
 
@@ -101,8 +106,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 					return
 				}
 				app.State.Clear(tgID)
-				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Записала! Так держать.", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
-				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "⚡ Быстрые действия:", ReplyMarkup: keyboard.QuickActionsInlineKeyboard()})
+				SendReplyWithQuickActions(ctx, b, chatID, "Записала! Так держать 💪")
 				return
 
 			case state.PendingRemind:
@@ -133,8 +137,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 					return
 				}
 				app.State.Clear(tgID)
-				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Ок, напомню о тренировке в " + tm.Format("02.01.2006 15:04") + ".", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
-				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "⚡ Быстрые действия:", ReplyMarkup: keyboard.QuickActionsInlineKeyboard()})
+				SendReplyWithQuickActions(ctx, b, chatID, "Ок, напомню о тренировке в "+tm.Format("02.01.2006 15:04")+".")
 				return
 
 			case state.PendingSettings:
@@ -143,6 +146,6 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 			}
 		}
 
-		SendHomeMessages(ctx, b, chatID, "Не поняла, что сделать.\n\n")
+		SendHomeMessages(ctx, b, chatID, copy.MsgUnknown)
 	}
 }

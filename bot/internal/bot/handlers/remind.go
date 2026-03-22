@@ -261,16 +261,7 @@ func HandlePendingRemindInput(app *botapp.App) func(ctx context.Context, b *tgbo
 		}
 
 		app.State.Clear(tgID)
-		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
-			ChatID:      chatID,
-			Text:        "Ок, напомню о тренировке в " + tm.Format("02.01.2006 15:04") + ".",
-			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
-		})
-		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
-			ChatID:      chatID,
-			Text:        "⚡ Быстрые действия:",
-			ReplyMarkup: keyboard.QuickActionsInlineKeyboard(),
-		})
+		SendReplyWithQuickActions(ctx, b, chatID, "Ок, напомню о тренировке в "+tm.Format("02.01.2006 15:04")+".")
 	}
 }
 

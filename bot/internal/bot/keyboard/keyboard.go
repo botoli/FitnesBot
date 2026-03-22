@@ -15,7 +15,7 @@ func MainMenuReplyKeyboard() *models.ReplyKeyboardMarkup {
 	return &models.ReplyKeyboardMarkup{
 		ResizeKeyboard:        true,
 		IsPersistent:          true,
-		InputFieldPlaceholder: "Число, дата или выбери кнопку ↓",
+		InputFieldPlaceholder: "Число или кнопка ↓",
 		Keyboard: [][]models.KeyboardButton{
 			{{Text: BtnPlan}, {Text: BtnStats}},
 			{{Text: BtnDone}, {Text: BtnRemind}},
@@ -57,14 +57,6 @@ func DoneFinalInlineKeyboard() *models.InlineKeyboardMarkup {
 func DoneFlowCancelRow() [][]models.InlineKeyboardButton {
 	return [][]models.InlineKeyboardButton{
 		{{Text: "❌ Отменить запись", CallbackData: "doneflow_cancel"}},
-	}
-}
-
-func RemindCancelInlineKeyboard() *models.InlineKeyboardMarkup {
-	return &models.InlineKeyboardMarkup{
-		InlineKeyboard: [][]models.InlineKeyboardButton{
-			{{Text: "❌ Отмена", CallbackData: "remind_cancel"}},
-		},
 	}
 }
 

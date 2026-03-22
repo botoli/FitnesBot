@@ -12,6 +12,7 @@ import (
 	"github.com/go-telegram/bot/models"
 
 	botapp "traningBot/bot/internal/bot"
+	"traningBot/bot/internal/bot/copy"
 	"traningBot/bot/internal/bot/keyboard"
 	stmodels "traningBot/bot/internal/storage/models"
 )
@@ -42,7 +43,7 @@ func Stats(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *mode
 		if len(reports) == 0 {
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 				ChatID:      chatID,
-				Text:        "Пока нет отчётов. После тренировки нажми «✅ Я позанималась» под быстрыми кнопками.",
+				Text:        "📊 Пока нет записей.\n\nПосле тренировки нажми «Я позанималась» — внизу или в быстрых действиях.",
 				ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
 			})
 			return
@@ -222,23 +223,23 @@ func renderStatsMessage(parsed []statsReportView, selectedTitle string) string {
 
 	if len(filtered) == 0 {
 		if selectedTitle == "" {
-			return "📊 Последние 5 тренировок\n\nПока нет данных."
+			return "📊 Последние тренировки\n\nПока нет данных."
 		}
-		return "📊 Последние 5 тренировок\n\nПо фильтру «" + selectedTitle + "» пока нет данных."
+		return "📊 Последние тренировки\n\nПо фильтру «" + selectedTitle + "» пока нет данных."
 	}
 
 	var sb strings.Builder
-	sb.WriteString("📊 Последние 5 тренировок\n\n")
-	separator := "━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	sb.WriteString("📊 Последние тренировки\n\n")
+	separator := copy.Divider
 
 	for i, r := range filtered {
 		sb.WriteString(separator)
 		sb.WriteString("\n")
-		sb.WriteString("**")
+		sb.WriteString("📌 ")
 		sb.WriteString(r.CreatedAt.Format("02.01 15:04"))
 		sb.WriteString(" · ")
 		sb.WriteString(r.Title)
-		sb.WriteString("**\n")
+		sb.WriteString("\n")
 		sb.WriteString(separator)
 		sb.WriteString("\n")
 

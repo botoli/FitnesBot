@@ -5,15 +5,14 @@ import (
 
 	tgbot "github.com/go-telegram/bot"
 
+	"traningBot/bot/internal/bot/copy"
 	"traningBot/bot/internal/bot/keyboard"
 )
 
-// SendHomeMessages отправляет главный экран: ответная клавиатура + быстрые inline-действия.
-// В Telegram одно сообщение не может одновременно нести reply- и inline-клавиатуру — поэтому два сообщения.
+// SendHomeMessages — главный экран: reply-клавиатура + быстрые inline-кнопки (два сообщения — ограничение Telegram).
 func SendHomeMessages(ctx context.Context, b *tgbot.Bot, chatID int64, intro string) {
 	if intro == "" {
-		intro = "🏠 Главное меню\n\n" +
-			"Снизу — основные разделы. Под следующим сообщением — быстрые действия: записать тренировку и напоминание."
+		intro = copy.HomeDefaultIntro()
 	}
 	_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 		ChatID:      chatID,
@@ -22,7 +21,21 @@ func SendHomeMessages(ctx context.Context, b *tgbot.Bot, chatID int64, intro str
 	})
 	_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 		ChatID:      chatID,
-		Text:        "⚡ Быстрые действия:",
+		Text:        copy.MsgQuickActions,
+		ReplyMarkup: keyboard.QuickActionsInlineKeyboard(),
+	})
+}
+
+// SendReplyWithQuickActions — ответ с основной клавиатурой и блоком быстрых действий (после успешных сценариев).
+func SendReplyWithQuickActions(ctx context.Context, b *tgbot.Bot, chatID int64, text string) {
+	_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
+		ChatID:      chatID,
+		Text:        text,
+		ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
+	})
+	_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
+		ChatID:      chatID,
+		Text:        copy.MsgQuickActions,
 		ReplyMarkup: keyboard.QuickActionsInlineKeyboard(),
 	})
 }

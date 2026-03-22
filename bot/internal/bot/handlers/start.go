@@ -7,7 +7,7 @@ import (
 	"github.com/go-telegram/bot/models"
 
 	botapp "traningBot/bot/internal/bot"
-	"traningBot/bot/internal/bot/keyboard"
+	"traningBot/bot/internal/bot/copy"
 )
 
 func Start(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
@@ -20,8 +20,11 @@ func Start(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *mode
 		username := update.Message.From.Username
 
 		_, _ = app.Store.EnsureUser(ctx, tgID, username)
-		SendHomeMessages(ctx, b, chatID,
-			"Привет! Я помогу вести план, записывать тренировки и напоминания.\n\n"+
-				"Снизу — разделы. Ниже вторым сообщением — быстрые кнопки «"+keyboard.BtnDone+"» и «"+keyboard.BtnRemind+"».")
+		name := ""
+		if update.Message.From.FirstName != "" {
+			name = update.Message.From.FirstName
+		}
+		intro := copy.Welcome(name) + "\n\n" + copy.RandomTip()
+		SendHomeMessages(ctx, b, chatID, intro)
 	}
 }

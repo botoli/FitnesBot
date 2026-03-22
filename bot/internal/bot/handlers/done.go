@@ -42,9 +42,9 @@ func Done(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 		}
 
 		todayPlans := plansForToday(plans)
-		selectionText := "🏋️ Главное › Я позанималась\n\n🏋️ Что сегодня делала?\n\nВыбери тренировку из плана или свою:"
+		selectionText := "🏋️ Запись тренировки\n\nЧто делала сегодня?\nВыбери тренировку из плана или свою:"
 		if len(todayPlans) == 0 {
-			selectionText = "🏋️ Главное › Я позанималась\n\n🏋️ Что сегодня делала?\n\nНа сегодня в плане ничего нет — нажми «Своя тренировка ✍️» или добавь план в разделе «➕ Добавить тренировку»."
+			selectionText = "🏋️ Запись тренировки\n\nНа сегодня в плане пусто.\nНажми «Своя тренировка ✍️» или добавь план: «➕ Добавить тренировку»."
 		}
 		sent, err := b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
@@ -83,7 +83,7 @@ func HandleDoneFlowCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot
 
 		if data == "doneflow_cancel" {
 			app.State.Clear(tgID)
-			cancelText := "❌ Запись отменена.\n\nКогда будешь готова — нажми «" + keyboard.BtnDone + "» под сообщением ниже."
+			cancelText := "Запись отменена.\n\nКогда будешь готова — «" + keyboard.BtnDone + "» внизу или в быстрых действиях."
 			if _, err := b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
 				ChatID:      chatID,
 				MessageID:   msgID,
@@ -100,7 +100,7 @@ func HandleDoneFlowCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot
 			if _, err := b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
 				ChatID:      chatID,
 				MessageID:   msgID,
-				Text:        "🏠 Главное меню — смотри сообщения ниже.",
+				Text:        "Главное меню — смотри сообщения ниже 👇",
 				ReplyMarkup: keyboard.EmptyInlineKeyboard(),
 			}); err != nil {
 				// ignore
@@ -115,12 +115,12 @@ func HandleDoneFlowCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot
 			if _, err := b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
 				ChatID:      chatID,
 				MessageID:   msgID,
-				Text:        "🏋️ Главное › Я позанималась › Своя тренировка\n\nОпиши тренировку текстом: что делала и сколько.",
+				Text:        "Своя тренировка ✍️\n\nОпиши, что делала и сколько (свободным текстом).",
 				ReplyMarkup: cancelOnly,
 			}); err != nil {
 				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 					ChatID:      chatID,
-					Text:        "🏋️ Главное › Я позанималась › Своя тренировка\n\nОпиши тренировку текстом: что делала и сколько.",
+					Text:        "Своя тренировка ✍️\n\nОпиши, что делала и сколько (свободным текстом).",
 					ReplyMarkup: cancelOnly,
 				})
 			}
@@ -366,8 +366,8 @@ func doneExercisePrompt(flow *state.DoneFlowSession) string {
 	bar := progressBar(step, total)
 	ex := flow.Exercises[flow.CurrentIndex]
 
-	return "🏋️ Главное › Я позанималась › " + flow.WorkoutTitle + "\n\n" +
-		bar + " Упражнение " + strconv.Itoa(step) + " из " + strconv.Itoa(total) + "\n\n" +
+	return "🏋️ " + flow.WorkoutTitle + "\n\n" +
+		bar + "  Упражнение " + strconv.Itoa(step) + " из " + strconv.Itoa(total) + "\n\n" +
 		ex.Name + "\n" +
 		"📋 План: " + ex.Plan + "\n\n" +
 		"Сколько сделала? (напиши число)"

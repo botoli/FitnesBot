@@ -70,6 +70,7 @@ func main() {
 	b.RegisterHandler(tgbot.HandlerTypeMessageText, "/stats", tgbot.MatchTypeExact, handlers.Stats(app))
 	b.RegisterHandler(tgbot.HandlerTypeMessageText, "/settings", tgbot.MatchTypeExact, handlers.Settings(app))
 	b.RegisterHandler(tgbot.HandlerTypeMessageText, "/cancel", tgbot.MatchTypeExact, handlers.Cancel(app))
+	b.RegisterHandler(tgbot.HandlerTypeMessageText, "/help", tgbot.MatchTypeExact, handlers.Help(app))
 
 	// Inline callbacks (prefix order: specific before generic menu)
 	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "planview_", tgbot.MatchTypePrefix, handlers.HandlePlanViewCallbacks(app))

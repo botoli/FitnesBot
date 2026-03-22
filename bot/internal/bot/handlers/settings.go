@@ -9,13 +9,14 @@ import (
 	"github.com/go-telegram/bot/models"
 
 	botapp "traningBot/bot/internal/bot"
+	"traningBot/bot/internal/bot/copy"
 	"traningBot/bot/internal/bot/keyboard"
 	"traningBot/bot/internal/bot/state"
 	stmodels "traningBot/bot/internal/storage/models"
 )
 
 func settingsSummaryText(st stmodels.UserSettings) string {
-	return "⚙️ Настройки\n\n" +
+	return "⚙️ Настройки\n" + copy.Divider + "\n\n" +
 		"🔔 Частота напоминаний: каждые " + strconv.Itoa(st.ReminderIntervalMinutes) + " мин\n" +
 		"🕒 Тихие часы: " + shortTime(st.QuietStart) + " – " + shortTime(st.QuietEnd) + "\n\n" +
 		"Меняй кнопками ниже или текстом:\n" +

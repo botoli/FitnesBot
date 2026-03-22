@@ -7,6 +7,7 @@ import (
 	"github.com/go-telegram/bot/models"
 
 	botapp "traningBot/bot/internal/bot"
+	"traningBot/bot/internal/bot/copy"
 )
 
 // Cancel сбрасывает активный сценарий и показывает главный экран.
@@ -16,6 +17,6 @@ func Cancel(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *mod
 			return
 		}
 		app.State.Clear(update.Message.From.ID)
-		SendHomeMessages(ctx, b, update.Message.Chat.ID, "Окей, сбросила то, что делали.\n\n")
+		SendHomeMessages(ctx, b, update.Message.Chat.ID, copy.MsgResetAck)
 	}
 }

@@ -10,6 +10,7 @@ import (
 	tgmodels "github.com/go-telegram/bot/models"
 
 	botapp "traningBot/bot/internal/bot"
+	"traningBot/bot/internal/bot/copy"
 	"traningBot/bot/internal/bot/keyboard"
 	smodels "traningBot/bot/internal/storage/models"
 )
@@ -183,7 +184,7 @@ func renderSingleDayPlanMessage(plans []smodels.Plan, day int, today int) string
 }
 
 func renderWeeklyPlanMessage(plans []smodels.Plan, today int) string {
-	const sep = "━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	sep := copy.Divider
 	byDay := make(map[int]smodels.Plan, len(plans))
 	for _, p := range plans {
 		byDay[p.DayOfWeek] = p
@@ -286,27 +287,6 @@ func dayOfWeekISO(t time.Time) int {
 		return 7
 	}
 	return wd
-}
-
-func weekdayRu(d int) string {
-	switch d {
-	case 1:
-		return "Пн"
-	case 2:
-		return "Вт"
-	case 3:
-		return "Ср"
-	case 4:
-		return "Чт"
-	case 5:
-		return "Пт"
-	case 6:
-		return "Сб"
-	case 7:
-		return "Вс"
-	default:
-		return "?"
-	}
 }
 
 func weekdayRuFullUpper(d int) string {
