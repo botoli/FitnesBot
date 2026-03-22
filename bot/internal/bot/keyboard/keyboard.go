@@ -18,6 +18,7 @@ func MainMenuReplyKeyboard() *models.ReplyKeyboardMarkup {
 		InputFieldPlaceholder: "Число, дата или выбери кнопку ↓",
 		Keyboard: [][]models.KeyboardButton{
 			{{Text: BtnPlan}, {Text: BtnStats}},
+			{{Text: BtnDone}, {Text: BtnRemind}},
 			{{Text: BtnAddPlan}},
 			{{Text: BtnSettings}},
 		},
@@ -78,7 +79,54 @@ func PlanSavedInlineKeyboard() *models.InlineKeyboardMarkup {
 func PlanViewInlineKeyboard() *models.InlineKeyboardMarkup {
 	return &models.InlineKeyboardMarkup{
 		InlineKeyboard: [][]models.InlineKeyboardButton{
-			{{Text: "✅ Начать сегодняшнюю", CallbackData: "menu_done"}, {Text: "✏️ Редактировать план", CallbackData: "menu_addplan"}},
+			{{Text: "✅ Начать сегодняшнюю", CallbackData: "menu_done"}, {Text: "✏️ Изменить план", CallbackData: "menu_addplan"}},
+		},
+	}
+}
+
+// PlanDayPickerInlineKeyboard — выбор дня или вся неделя.
+func PlanDayPickerInlineKeyboard() *models.InlineKeyboardMarkup {
+	return &models.InlineKeyboardMarkup{
+		InlineKeyboard: [][]models.InlineKeyboardButton{
+			{
+				{Text: "Пн", CallbackData: "planview_day_1"},
+				{Text: "Вт", CallbackData: "planview_day_2"},
+				{Text: "Ср", CallbackData: "planview_day_3"},
+				{Text: "Чт", CallbackData: "planview_day_4"},
+			},
+			{
+				{Text: "Пт", CallbackData: "planview_day_5"},
+				{Text: "Сб", CallbackData: "planview_day_6"},
+				{Text: "Вс", CallbackData: "planview_day_7"},
+			},
+			{{Text: "📅 Вся неделя", CallbackData: "planview_week"}},
+		},
+	}
+}
+
+// PlanDayNavInlineKeyboard — после выбора дня: назад и действия.
+func PlanDayNavInlineKeyboard() *models.InlineKeyboardMarkup {
+	return &models.InlineKeyboardMarkup{
+		InlineKeyboard: [][]models.InlineKeyboardButton{
+			{{Text: "◀️ К дням", CallbackData: "planview_back"}, {Text: "📅 Вся неделя", CallbackData: "planview_week"}},
+			{{Text: "✅ Я позанималась", CallbackData: "menu_done"}, {Text: "✏️ Изменить план", CallbackData: "menu_addplan"}},
+		},
+	}
+}
+
+// RemindWorkoutInlineKeyboard — быстрые напоминания о тренировке + отмена.
+func RemindWorkoutInlineKeyboard() *models.InlineKeyboardMarkup {
+	return &models.InlineKeyboardMarkup{
+		InlineKeyboard: [][]models.InlineKeyboardButton{
+			{
+				{Text: "Сегодня 18:00", CallbackData: "remind_quick_td18"},
+				{Text: "Сегодня 20:00", CallbackData: "remind_quick_td20"},
+			},
+			{
+				{Text: "Завтра 08:00", CallbackData: "remind_quick_tm8"},
+				{Text: "Завтра 19:00", CallbackData: "remind_quick_tm19"},
+			},
+			{{Text: "❌ Отмена", CallbackData: "remind_cancel"}},
 		},
 	}
 }

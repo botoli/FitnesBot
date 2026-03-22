@@ -71,9 +71,10 @@ func main() {
 	b.RegisterHandler(tgbot.HandlerTypeMessageText, "/settings", tgbot.MatchTypeExact, handlers.Settings(app))
 	b.RegisterHandler(tgbot.HandlerTypeMessageText, "/cancel", tgbot.MatchTypeExact, handlers.Cancel(app))
 
-	// Inline menu callbacks
+	// Inline callbacks (prefix order: specific before generic menu)
+	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "planview_", tgbot.MatchTypePrefix, handlers.HandlePlanViewCallbacks(app))
+	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "remind_quick_", tgbot.MatchTypePrefix, handlers.HandleRemindQuickCallbacks(app))
 	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "menu_", tgbot.MatchTypePrefix, handlers.MenuCallbacks(app))
-	// Settings callbacks
 	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "set_", tgbot.MatchTypePrefix, handlers.SettingsCallbacks(app))
 	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "planadd_", tgbot.MatchTypePrefix, handlers.HandlePlanAddCallbacks(app))
 	b.RegisterHandler(tgbot.HandlerTypeCallbackQueryData, "statsf_", tgbot.MatchTypePrefix, handlers.HandleStatsCallbacks(app))

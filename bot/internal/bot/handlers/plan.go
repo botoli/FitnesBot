@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
@@ -43,16 +44,142 @@ func Plan(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *tgmod
 		if len(plans) == 0 {
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 				ChatID:      update.Message.Chat.ID,
-				Text:        "Пока нет плана. Нажми «✏️ Редактировать план», чтобы создать первую тренировку.",
+				Text:        "Пока нет плана. Нажми «✏️ Изменить план», чтобы создать первую тренировку.",
 				ReplyMarkup: keyboard.PlanViewInlineKeyboard(),
 			})
 			return
 		}
 
-		today := dayOfWeekISO(time.Now())
-		text := renderWeeklyPlanMessage(plans, today)
-		sendTextInChunks(ctx, b, update.Message.Chat.ID, text, keyboard.PlanViewInlineKeyboard())
+		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text: "📋 План тренировок\n\n" +
+				"Выбери день недели или посмотри весь план на неделю — кнопки ниже.",
+			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
+		})
+		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
+			ChatID:      update.Message.Chat.ID,
+			Text:        "👇",
+			ReplyMarkup: keyboard.PlanDayPickerInlineKeyboard(),
+		})
 	}
+}
+
+// HandlePlanViewCallbacks — выбор дня / вся неделя / назад в просмотре плана.
+func HandlePlanViewCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *tgmodels.Update) {
+	return func(ctx context.Context, b *tgbot.Bot, update *tgmodels.Update) {
+		if update.CallbackQuery == nil || update.CallbackQuery.Message.Message == nil {
+			return
+		}
+		data := update.CallbackQuery.Data
+		if !strings.HasPrefix(data, "planview_") {
+			return
+		}
+		_, _ = b.AnswerCallbackQuery(ctx, &tgbot.AnswerCallbackQueryParams{CallbackQueryID: update.CallbackQuery.ID})
+
+		msg := update.CallbackQuery.Message.Message
+		chatID := msg.Chat.ID
+		msgID := msg.ID
+		tgID := update.CallbackQuery.From.ID
+
+		u, err := app.Store.EnsureUser(ctx, tgID, update.CallbackQuery.From.Username)
+		if err != nil {
+			return
+		}
+		plans, err := app.Store.ListPlansForWeek(ctx, u.ID)
+		if err != nil {
+			return
+		}
+
+		today := dayOfWeekISO(time.Now())
+
+		switch data {
+		case "planview_back":
+			pickerText := "📋 План тренировок\n\nВыбери день недели или «Вся неделя»:"
+			_, _ = b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
+				ChatID:      chatID,
+				MessageID:   msgID,
+				Text:        pickerText,
+				ReplyMarkup: keyboard.PlanDayPickerInlineKeyboard(),
+			})
+			return
+
+		case "planview_week":
+			if len(plans) == 0 {
+				_, _ = b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
+					ChatID:      chatID,
+					MessageID:   msgID,
+					Text:        "Плана пока нет.",
+					ReplyMarkup: keyboard.PlanDayPickerInlineKeyboard(),
+				})
+				return
+			}
+			_, _ = b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
+				ChatID:      chatID,
+				MessageID:   msgID,
+				Text:        "📅 Отправляю план на всю неделю — смотри сообщения ниже.",
+				ReplyMarkup: keyboard.PlanDayPickerInlineKeyboard(),
+			})
+			weekText := renderWeeklyPlanMessage(plans, today)
+			sendTextInChunks(ctx, b, chatID, weekText, keyboard.PlanViewInlineKeyboard())
+			return
+		}
+
+		if strings.HasPrefix(data, "planview_day_") {
+			day, err := strconv.Atoi(strings.TrimPrefix(data, "planview_day_"))
+			if err != nil || day < 1 || day > 7 {
+				return
+			}
+			if len(plans) == 0 {
+				_, _ = b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
+					ChatID:      chatID,
+					MessageID:   msgID,
+					Text:        "Плана пока нет.",
+					ReplyMarkup: keyboard.PlanDayPickerInlineKeyboard(),
+				})
+				return
+			}
+			text := renderSingleDayPlanMessage(plans, day, today)
+			if _, err := b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
+				ChatID:      chatID,
+				MessageID:   msgID,
+				Text:        text,
+				ReplyMarkup: keyboard.PlanDayNavInlineKeyboard(),
+			}); err != nil {
+				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: text, ReplyMarkup: keyboard.PlanDayNavInlineKeyboard()})
+			}
+		}
+	}
+}
+
+func renderSingleDayPlanMessage(plans []smodels.Plan, day int, today int) string {
+	var p *smodels.Plan
+	for i := range plans {
+		if plans[i].DayOfWeek == day {
+			p = &plans[i]
+			break
+		}
+	}
+
+	var sb strings.Builder
+	sb.WriteString("📋 План на ")
+	sb.WriteString(weekdayRuFullUpper(day))
+	if day == today {
+		sb.WriteString(" ⬅️ СЕГОДНЯ")
+	}
+	sb.WriteString("\n\n")
+
+	if p == nil {
+		sb.WriteString("В этот день тренировка в плане не задана.\nНажми «➕ Добавить тренировку» внизу.")
+		return sb.String()
+	}
+
+	sb.WriteString(renderPlanDetailsSection(p.Title, p.Details))
+	sb.WriteString("\n\n")
+	sb.WriteString("📌 Условные обозначения:\n")
+	sb.WriteString("🟥 День А — Грудь/Плечи/Руки\n")
+	sb.WriteString("🟦 День Б — Спина/Ноги/Пресс\n")
+	sb.WriteString("▸ Упражнение / план")
+	return sb.String()
 }
 
 func renderWeeklyPlanMessage(plans []smodels.Plan, today int) string {

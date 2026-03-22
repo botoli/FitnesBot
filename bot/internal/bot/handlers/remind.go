@@ -34,17 +34,86 @@ func Remind(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *mod
 		app.State.Set(tgID, state.Pending{Kind: state.PendingRemind})
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
-			Text: "⏰ Новое напоминание\n\n" +
-				"Напиши одной строкой: дату, время и текст.\n" +
-				"Пример: 20.03.2026 19:00 Купить протеин\n\n" +
-				"Или нажми «Отмена» под этим сообщением.",
+			Text: "⏰ Напоминание о тренировке\n\n" +
+				"Напиши дату и время (текст необязателен — подставлю тренировочное напоминание).\n" +
+				"Формат: ДД.ММ.ГГГГ ЧЧ:ММ [текст]\n" +
+				"Пример: 20.03.2026 19:00\n" +
+				"Или с текстом: 20.03.2026 19:00 Кардио + силовая\n\n" +
+				"👇 Быстрый выбор времени или отмена:",
 			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
 		})
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
-			Text:        "👇",
-			ReplyMarkup: keyboard.RemindCancelInlineKeyboard(),
+			Text:        "Быстрые пресеты:",
+			ReplyMarkup: keyboard.RemindWorkoutInlineKeyboard(),
 		})
+	}
+}
+
+// HandleRemindQuickCallbacks — одноразовое напоминание о тренировке по пресету.
+func HandleRemindQuickCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
+	return func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
+		if update.CallbackQuery == nil || update.CallbackQuery.Message.Message == nil {
+			return
+		}
+		data := update.CallbackQuery.Data
+		if !strings.HasPrefix(data, "remind_quick_") {
+			return
+		}
+		_, _ = b.AnswerCallbackQuery(ctx, &tgbot.AnswerCallbackQueryParams{CallbackQueryID: update.CallbackQuery.ID})
+
+		tgID := update.CallbackQuery.From.ID
+		p, ok := app.State.Get(tgID)
+		if !ok || p.Kind != state.PendingRemind {
+			return
+		}
+
+		u, err := app.Store.GetUserByTgID(ctx, tgID)
+		if err != nil {
+			return
+		}
+		st, _ := app.Store.GetUserSettings(ctx, u.ID)
+		loc := time.Local
+		now := time.Now()
+
+		var remindAt time.Time
+		switch data {
+		case "remind_quick_td18":
+			remindAt = utils.NextClockOnOrAfter(now, 18, 0, loc)
+		case "remind_quick_td20":
+			remindAt = utils.NextClockOnOrAfter(now, 20, 0, loc)
+		case "remind_quick_tm8":
+			remindAt = utils.TomorrowAt(8, 0, now, loc)
+		case "remind_quick_tm19":
+			remindAt = utils.TomorrowAt(19, 0, now, loc)
+		default:
+			return
+		}
+
+		_, err = app.Store.CreateReminder(ctx, stmodels.Reminder{
+			UserID:      u.ID,
+			RemindAt:    remindAt,
+			Message:     utils.DefaultWorkoutReminderMessage,
+			IsRecurring: true,
+			IntervalMin: st.ReminderIntervalMinutes,
+		})
+		if err != nil {
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: update.CallbackQuery.Message.Message.Chat.ID, Text: "Не смогла сохранить напоминание."})
+			return
+		}
+
+		app.State.Clear(tgID)
+		msg := update.CallbackQuery.Message.Message
+		confirm := "✅ Напоминание о тренировке на " + remindAt.Format("02.01.2006 15:04") + "."
+		if _, err := b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
+			ChatID:      msg.Chat.ID,
+			MessageID:   msg.ID,
+			Text:        confirm,
+			ReplyMarkup: keyboard.EmptyInlineKeyboard(),
+		}); err != nil {
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: msg.Chat.ID, Text: confirm})
+		}
+		SendHomeMessages(ctx, b, msg.Chat.ID, confirm+"\n\n")
 	}
 }
 
@@ -173,7 +242,7 @@ func HandlePendingRemindInput(app *botapp.App) func(ctx context.Context, b *tgbo
 		if err != nil {
 			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 				ChatID:      chatID,
-				Text:        "Не распознала. Формат: DD.MM.YYYY HH:MM текст",
+				Text:        "Не распознала. Формат: ДД.ММ.ГГГГ ЧЧ:ММ [текст]\nТекст можно не вводить — будет напоминание о тренировке.",
 				ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
 			})
 			return
@@ -194,8 +263,13 @@ func HandlePendingRemindInput(app *botapp.App) func(ctx context.Context, b *tgbo
 		app.State.Clear(tgID)
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 			ChatID:      chatID,
-			Text:        "Ок, напомню в указанное время.",
+			Text:        "Ок, напомню о тренировке в " + tm.Format("02.01.2006 15:04") + ".",
 			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
+		})
+		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
+			ChatID:      chatID,
+			Text:        "⚡ Быстрые действия:",
+			ReplyMarkup: keyboard.QuickActionsInlineKeyboard(),
 		})
 	}
 }

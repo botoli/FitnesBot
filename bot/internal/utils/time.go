@@ -6,6 +6,9 @@ import (
 	"time"
 )
 
+// DefaultWorkoutReminderMessage — текст напоминания, если пользователь указал только дату и время.
+const DefaultWorkoutReminderMessage = "🏋️ Время тренировки! Открой бота и нажми «Я позанималась», когда закончишь."
+
 // ParseUserReminderInput parses: "DD.MM.YYYY HH:MM some text"
 func ParseUserReminderInput(s string, now time.Time, loc *time.Location) (time.Time, string, error) {
 	s = strings.TrimSpace(s)
@@ -14,8 +17,8 @@ func ParseUserReminderInput(s string, now time.Time, loc *time.Location) (time.T
 	}
 
 	parts := strings.Fields(s)
-	if len(parts) < 3 {
-		return time.Time{}, "", errors.New("expected: DD.MM.YYYY HH:MM text")
+	if len(parts) < 2 {
+		return time.Time{}, "", errors.New("expected: DD.MM.YYYY HH:MM [текст]")
 	}
 
 	dtStr := parts[0] + " " + parts[1]
@@ -24,9 +27,12 @@ func ParseUserReminderInput(s string, now time.Time, loc *time.Location) (time.T
 		return time.Time{}, "", err
 	}
 
-	msg := strings.TrimSpace(strings.Join(parts[2:], " "))
+	msg := ""
+	if len(parts) >= 3 {
+		msg = strings.TrimSpace(strings.Join(parts[2:], " "))
+	}
 	if msg == "" {
-		return time.Time{}, "", errors.New("message is empty")
+		msg = DefaultWorkoutReminderMessage
 	}
 
 	// Prevent creating reminders in the past by a lot; allow a small drift.
@@ -35,6 +41,21 @@ func ParseUserReminderInput(s string, now time.Time, loc *time.Location) (time.T
 	}
 
 	return t, msg, nil
+}
+
+// NextClockOnOrAfter — ближайшее сегодня hour:min в loc; если уже прошло — завтра в то же время.
+func NextClockOnOrAfter(now time.Time, hour, min int, loc *time.Location) time.Time {
+	t := time.Date(now.Year(), now.Month(), now.Day(), hour, min, 0, 0, loc)
+	if !t.After(now.Add(30 * time.Second)) {
+		t = t.Add(24 * time.Hour)
+	}
+	return t
+}
+
+// TomorrowAt — завтра в hour:min (локальное время).
+func TomorrowAt(hour, min int, now time.Time, loc *time.Location) time.Time {
+	t := time.Date(now.Year(), now.Month(), now.Day(), hour, min, 0, 0, loc)
+	return t.Add(24 * time.Hour)
 }
 
 func InQuietHours(now time.Time, quietStart time.Time, quietEnd time.Time) bool {

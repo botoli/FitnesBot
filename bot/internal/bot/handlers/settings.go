@@ -11,7 +11,17 @@ import (
 	botapp "traningBot/bot/internal/bot"
 	"traningBot/bot/internal/bot/keyboard"
 	"traningBot/bot/internal/bot/state"
+	stmodels "traningBot/bot/internal/storage/models"
 )
+
+func settingsSummaryText(st stmodels.UserSettings) string {
+	return "⚙️ Настройки\n\n" +
+		"🔔 Частота напоминаний: каждые " + strconv.Itoa(st.ReminderIntervalMinutes) + " мин\n" +
+		"🕒 Тихие часы: " + shortTime(st.QuietStart) + " – " + shortTime(st.QuietEnd) + "\n\n" +
+		"Меняй кнопками ниже или текстом:\n" +
+		"• freq 10 — интервал в минутах (1–120)\n" +
+		"• quiet 23:00 08:00 — не беспокоить"
+}
 
 func Settings(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
 	return func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
@@ -35,14 +45,14 @@ func Settings(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *m
 
 		app.State.Set(tgID, state.Pending{Kind: state.PendingSettings})
 		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
-			ChatID: chatID,
-			Text: "Настройки напоминаний:\n" +
-				"🔔 Частота: каждые " + strconv.Itoa(st.ReminderIntervalMinutes) + " минут\n" +
-				"🕒 Тихие часы: " + shortTime(st.QuietStart) + " - " + shortTime(st.QuietEnd) + "\n\n" +
-				"Введи команду текстом:\n" +
-				"- freq 10\n" +
-				"- quiet 23:00 08:00",
+			ChatID:      chatID,
+			Text:        settingsSummaryText(st),
 			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
+		})
+		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
+			ChatID:      chatID,
+			Text:        "👇 Нажми, чтобы изменить:",
+			ReplyMarkup: keyboard.SettingsInlineKeyboard(),
 		})
 	}
 }
@@ -57,7 +67,9 @@ func SettingsCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, 
 		if update.CallbackQuery.Message.Message == nil {
 			return
 		}
-		chatID := update.CallbackQuery.Message.Message.Chat.ID
+		msg := update.CallbackQuery.Message.Message
+		chatID := msg.Chat.ID
+		msgID := msg.ID
 		tgID := update.CallbackQuery.From.ID
 		username := update.CallbackQuery.From.Username
 		data := update.CallbackQuery.Data
@@ -86,13 +98,19 @@ func SettingsCallbacks(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, 
 			return
 		}
 
-		_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
-			ChatID: chatID,
-			Text: "Настройки обновлены:\n" +
-				"🔔 Частота: каждые " + strconv.Itoa(st.ReminderIntervalMinutes) + " минут\n" +
-				"🕒 Тихие часы: " + shortTime(st.QuietStart) + " - " + shortTime(st.QuietEnd),
-			ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
-		})
+		text := settingsSummaryText(st)
+		if _, err := b.EditMessageText(ctx, &tgbot.EditMessageTextParams{
+			ChatID:      chatID,
+			MessageID:   msgID,
+			Text:        "✅ Сохранено.\n\n" + text,
+			ReplyMarkup: keyboard.SettingsInlineKeyboard(),
+		}); err != nil {
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
+				ChatID:      chatID,
+				Text:        "✅ Сохранено.\n\n" + text,
+				ReplyMarkup: keyboard.SettingsInlineKeyboard(),
+			})
+		}
 	}
 }
 
@@ -138,7 +156,9 @@ func HandlePendingSettings(app *botapp.App) func(ctx context.Context, b *tgbot.B
 				return
 			}
 			app.State.Clear(tgID)
-			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Частота обновлена.", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
+			st, _ := app.Store.GetUserSettings(ctx, u.ID)
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово.\n\n" + settingsSummaryText(st), ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "👇", ReplyMarkup: keyboard.SettingsInlineKeyboard()})
 			return
 
 		case "quiet":
@@ -152,10 +172,12 @@ func HandlePendingSettings(app *botapp.App) func(ctx context.Context, b *tgbot.B
 				return
 			}
 			app.State.Clear(tgID)
-			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Тихие часы обновлены.", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
+			st, _ := app.Store.GetUserSettings(ctx, u.ID)
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово.\n\n" + settingsSummaryText(st), ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "👇", ReplyMarkup: keyboard.SettingsInlineKeyboard()})
 			return
 		default:
-			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Команда не распознана. Примеры: freq 10, quiet 23:00 08:00"})
+			_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Не поняла. Примеры: freq 10, quiet 23:00 08:00"})
 		}
 	}
 }

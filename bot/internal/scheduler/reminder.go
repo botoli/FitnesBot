@@ -43,7 +43,7 @@ func RunReminderLoop(ctx context.Context, store *postgres.Store, b *tgbot.Bot) {
 					}
 				}
 
-				text := "⏰ Напоминание!\n" + r.Message
+				text := "⏰ Напоминание о тренировке\n\n" + r.Message
 				params := &tgbot.SendMessageParams{
 					ChatID:    tgID,
 					Text:      text,

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"strconv"
 	"strings"
 	"time"
 
@@ -117,7 +116,7 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 				if err != nil {
 					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{
 						ChatID:      chatID,
-						Text:        "Не распознала. Формат: DD.MM.YYYY HH:MM текст",
+						Text:        "Не распознала. Формат: ДД.ММ.ГГГГ ЧЧ:ММ [текст]\nТекст можно не вводить — будет напоминание о тренировке.",
 						ReplyMarkup: keyboard.MainMenuReplyKeyboard(),
 					})
 					return
@@ -134,53 +133,13 @@ func Text(app *botapp.App) func(ctx context.Context, b *tgbot.Bot, update *model
 					return
 				}
 				app.State.Clear(tgID)
-				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Ок, напомню в указанное время.", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
+				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Ок, напомню о тренировке в " + tm.Format("02.01.2006 15:04") + ".", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
+				_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "⚡ Быстрые действия:", ReplyMarkup: keyboard.QuickActionsInlineKeyboard()})
 				return
 
 			case state.PendingSettings:
-				u, err := app.Store.GetUserByTgID(ctx, tgID)
-				if err != nil {
-					app.State.Clear(tgID)
-					return
-				}
-				parts := strings.Fields(text)
-				if len(parts) == 0 {
-					return
-				}
-				switch parts[0] {
-				case "freq":
-					if len(parts) != 2 {
-						_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Формат: `freq 10`", ParseMode: models.ParseModeMarkdown})
-						return
-					}
-					mins, err := strconv.Atoi(parts[1])
-					if err != nil || mins < 1 || mins > 120 {
-						_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Минуты должны быть 1..120."})
-						return
-					}
-					if _, err := app.Store.UpdateReminderInterval(ctx, u.ID, mins); err != nil {
-						_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Не смогла обновить частоту."})
-						return
-					}
-					app.State.Clear(tgID)
-					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Частота обновлена.", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
-					return
-				case "quiet":
-					if len(parts) != 3 {
-						_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Формат: `quiet 23:00 08:00`", ParseMode: models.ParseModeMarkdown})
-						return
-					}
-					if _, err := app.Store.UpdateQuietHours(ctx, u.ID, parts[1], parts[2]); err != nil {
-						_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Не смогла обновить тихие часы."})
-						return
-					}
-					app.State.Clear(tgID)
-					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Готово. Тихие часы обновлены.", ReplyMarkup: keyboard.MainMenuReplyKeyboard()})
-					return
-				default:
-					_, _ = b.SendMessage(ctx, &tgbot.SendMessageParams{ChatID: chatID, Text: "Команда не распознана. Примеры: `freq 10`, `quiet 23:00 08:00`", ParseMode: models.ParseModeMarkdown})
-					return
-				}
+				HandlePendingSettings(app)(ctx, b, update)
+				return
 			}
 		}
 
